@@ -1,5 +1,11 @@
 # mongooseim-docker
 
+## Miquido notes
+You build and start MIM+db with two commands:
+`sudo ./start_miquido_mim.sh build <path_to_mim_root>`
+`sudo ./start_miquido_mim.sh run <path_to_mim_root>`
+It loads ejabberd.cfg from ./config/ejabberd.cfg and uses `*.pem` files form there.
+
 MongooseIM is Erlang Solutions' robust and efficient XMPP server aimed at large installations.
 Specifically designed for enterprise purposes,
 it is fault-tolerant, can utilize resources of multiple clustered machines and easily scale in need of more capacity (by just adding a box/VM).
@@ -192,3 +198,35 @@ For example, like this in case of the PostgreSQL container mentioned above:
 {odbc_server, {pgsql, "mongooseim-postgres", "mongooseim", "mongooseim", "mongooseim"}}.
 ```
 
+### Multistage build
+
+There is another Dockerfile in this repo `Dockerfile.multistage`, which allows
+to build MongooseIM Docker image from current source code, instead of pulling
+it from GitHub, like `builder` does.
+
+It may be used with `multistage_build.sh` script, which is overlay over
+Dockerfile. Usage is simple:
+
+```
+./multistage_build.sh <path_to_moongooseim_root_dir>
+```
+
+It will copy required files into MongooseIM directory and start build process.
+Files to be copied: `member/start.sh` and `Dockerfile.multistage`. They
+will be deleted once build process is finished or canceled.
+
+It is possible to pass custom image tag with environmental variable:
+
+```
+IMAGE_TAG=my_mongooseim_docker_build \
+  ./multistage_build.sh <path_to_moongooseim_root_dir>
+```
+
+#### Pitfalls
+
+By default `multistage_build.sh` script uses git branch and git reference
+as an image tag, e.g.: `new_feature-c36dce4fd`. Branch names may contain
+characters, which are invalid tags. For instance `/` cannot be present
+in a tag name. In such a case, image's custom tag has to be explicitly set
+using aforementioned `IMAGE_TAG` variable. Please visit [Docker docs](https://docs.docker.com/engine/reference/commandline/tag/#extended-description)
+to read about valid Docker tag names.
